@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Administración de Finca</title>
+    <style>
+        /* Variables de colores */
+        :root {
+            --primary-color: #2e7d32;
+            --primary-light: #4caf50;
+            --primary-dark: #1b5e20;
+            --secondary-color: #795548;
+            --accent-color: #ff9800;
+            --text-light: #f5f5f5;
+            --text-dark: #333333;
+            --bg-light: #f9f9f9;
+            --bg-dark: #263238;
+            --sidebar-width: 250px;
+            --header-height: 70px;
+        }
+
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            height: 100vh;
+            position: fixed;
+            overflow-y: auto;
+            transition: all 0.3s;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: var(--primary-dark);
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            padding: 15px 25px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .menu-item.active {
+            /*background-color: var(--primary-dark);*/
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .menu-icon {
+            margin-right: 15px;
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* Contenido principal */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            height: var(--header-height);
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left h1 {
+            font-size: 1.5rem;
+            color: var(--primary-dark);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .notifications {
+            position: relative;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Contenido del dashboard */
+        .dashboard-content {
+            padding: 30px;
+            flex: 1;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background-color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            color: var(--primary-dark);
+        }
+
+        .card p {
+            color: var(--text-dark);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                overflow: visible;
+            }
+
+            .sidebar-header h2 span,
+            .menu-item span:last-child {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 70px;
+            }
+
+            .sidebar:hover {
+                width: var(--sidebar-width);
+            }
+
+            .sidebar:hover .sidebar-header h2 span,
+            .sidebar:hover .menu-item span:last-child {
+                display: inline;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>
+                <div class="logo">F</div>
+                <span>Mi Finca</span>
+            </h2>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-item active">
+                <span class="menu-icon">🐄</span>
+                <span>Registrar</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">👶</span>
+                <span>Nacimientos</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">💉</span>
+                <span>Vacunas</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">🤰</span>
+                <span>Preñez</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">🥛</span>
+                <span>Producción</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">📊</span>
+                <span>Reportes</span>
+            </div>
+            <div class="menu-item">
+                <span class="menu-icon">⚙️</span>
+                <span>Configuración</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Dashboard de Administración</h1>
+            </div>
+
+            <div class="header-right">
+                <div class="notifications">
+                    <span>🔔</span>
+                    <div class="notification-badge">3</div>
+                </div>
+
+                <div class="user-info">
+                    <div class="user-avatar">AD</div>
+                    <span>ADMIN ADMIN</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenido del dashboard -->
+        <div class="dashboard-content">
+            <div class="welcome-section">
+                <h2>Bienvenido al Sistema de Gestión de Finca</h2>
+                <p>Administra eficientemente todos los aspectos de tu finca desde un solo lugar.</p>
+            </div>
+
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🐄</div>
+                        <h3>Registro de Ganado</h3>
+                    </div>
+                    <p>Gestiona el inventario completo de tu ganado, incluyendo información detallada de cada animal.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">👶</div>
+                        <h3>Control de Nacimientos</h3>
+                    </div>
+                    <p>Registra y realiza seguimiento a todos los nacimientos en tu finca.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">💉</div>
+                        <h3>Programa de Vacunación</h3>
+                    </div>
+                    <p>Administra el calendario de vacunación y tratamientos veterinarios.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🤰</div>
+                        <h3>Seguimiento de Preñez</h3>
+                    </div>
+                    <p>Controla el estado reproductivo de tus animales y programa inseminaciones.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">🥛</div>
+                        <h3>Producción Lechera</h3>
+                    </div>
+                    <p>Registra y analiza la producción diaria de leche de tu ganado.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon">📊</div>
+                        <h3>Reportes y Análisis</h3>
+                    </div>
+                    <p>Genera reportes detallados sobre el rendimiento y estado de tu finca.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
