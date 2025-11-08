@@ -76,7 +76,7 @@ import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import BaseAdmin from '../components/BaseAdmin.vue';
 
-const API_URL = 'http://localhost:8000/api2/vacunas/';
+const API_URL = 'https://proyecto-finca-yxcf.onrender.com/api2/vacunas/';
 
 const vacunas = ref([]);
 const isFormVisible = ref(false);

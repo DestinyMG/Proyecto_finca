@@ -103,7 +103,7 @@ const animalId = Number(route.params.id);
 // DATOS DEL ANIMAL
 // -----------------------------------------------------
 const animal = ref(null);
-const API_ANIMALES = 'http://localhost:8000/api1/animales/';
+const API_ANIMALES = 'https://proyecto-finca-yxcf.onrender.com/api1/animales/';
 const camposHembra = ['embarazada', 'produccionLeche', 'partos', 'fecha_palpacion', 'fecha_parto', 'codigo_madre'];
 
 const cargarAnimal = async () => {
@@ -131,7 +131,7 @@ const formatLabel = (key) => key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUp
 // HISTORIAL SANITARIO
 // -----------------------------------------------------
 const historial = ref([]);
-const API_REGISTROS = 'http://localhost:8000/api2/registros/';
+const API_REGISTROS = 'https://proyecto-finca-yxcf.onrender.com/api2/registros/';
 
 const cargarHistorial = async () => {
     try {
@@ -147,7 +147,7 @@ const cargarHistorial = async () => {
 // HISTORIAL DE GESTACIÓN (solo hembras)
 // -----------------------------------------------------
 const gestacion = ref([]);
-const API_GESTACION = 'http://localhost:8000/api4/gestacion/';
+const API_GESTACION = 'https://proyecto-finca-yxcf.onrender.com/api4/gestacion/';
 
 const cargarGestacion = async () => {
     try {
@@ -163,7 +163,7 @@ const cargarGestacion = async () => {
 // HISTORIAL DE PRODUCCIÓN DE LECHE (solo hembras)
 // -----------------------------------------------------
 const produccion = ref([]);
-const API_PRODUCCION = 'http://localhost:8000/api3/produccion/';
+const API_PRODUCCION = 'https://proyecto-finca-yxcf.onrender.com/api3/produccion/';
 
 const cargarProduccion = async () => {
     if (!animal.value || animal.value.sexo !== 'Hembra') return;

@@ -199,7 +199,7 @@ import { ref, computed, onMounted } from 'vue';
 import axios from 'axios';
 import BaseAdmin from '../components/BaseAdmin.vue';
 
-const API_URL = 'http://localhost:8000/api1/animales/';
+const API_URL = 'https://proyecto-finca-yxcf.onrender.com/api1/animales/';
 
 const isFormVisible = ref(false);
 const isEditing = ref(false);

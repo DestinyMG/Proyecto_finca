@@ -69,8 +69,8 @@ import { Pie } from "vue-chartjs";
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement);
 
-const API_PRODUCCION = "http://localhost:8000/api3/produccion/";
-const API_ANIMALES = "http://localhost:8000/api1/animales/";
+const API_PRODUCCION = "https://proyecto-finca-yxcf.onrender.com/api3/produccion/";
+const API_ANIMALES = "https://proyecto-finca-yxcf.onrender.com/api1/animales/";
 
 // Variables generales
 const filtroAnio = ref(new Date().getFullYear());

@@ -90,7 +90,7 @@
                     <!-- BOTONES -->
                     <div class="form-actions">
                         <button type="submit" class="submit-btn">{{ editing ? 'Actualizar Registro' : 'Guardar Registro'
-                            }}</button>
+                        }}</button>
                         <button v-if="editing" type="button" @click="cancelarEdicion"
                             class="cancel-btn">Cancelar</button>
                     </div>
@@ -159,11 +159,11 @@ import axios from 'axios';
 import BaseAdmin from '../components/BaseAdmin.vue';
 
 // ENDPOINTS
-const API_ANIMALES = 'http://localhost:8000/api1/animales/';
-const API_ENFERMEDADES = 'http://localhost:8000/api2/enfermedades/';
-const API_MEDICAMENTOS = 'http://localhost:8000/api2/medicamentos/';
-const API_VACUNAS = 'http://localhost:8000/api2/vacunas/';
-const API_REGISTROS = 'http://localhost:8000/api2/registros/';
+const API_ANIMALES = 'https://proyecto-finca-yxcf.onrender.com/api1/animales/';
+const API_ENFERMEDADES = 'https://proyecto-finca-yxcf.onrender.com/api2/enfermedades/';
+const API_MEDICAMENTOS = 'https://proyecto-finca-yxcf.onrender.com/api2/medicamentos/';
+const API_VACUNAS = 'https://proyecto-finca-yxcf.onrender.com/api2/vacunas/';
+const API_REGISTROS = 'https://proyecto-finca-yxcf.onrender.com/api2/registros/';
 
 // VARIABLES
 const codigoAnimal = ref('');

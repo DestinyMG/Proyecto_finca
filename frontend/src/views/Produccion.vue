@@ -62,8 +62,8 @@ import axios from 'axios';
 import BaseAdmin from '../components/BaseAdmin.vue';
 
 // ENDPOINTS
-const API_ANIMALES = 'http://localhost:8000/api1/animales/';
-const API_PRODUCCION = 'http://localhost:8000/api3/produccion/';
+const API_ANIMALES = 'https://proyecto-finca-yxcf.onrender.com/api1/animales/';
+const API_PRODUCCION = 'https://proyecto-finca-yxcf.onrender.com/api3/produccion/';
 
 // VARIABLES
 const codigoAnimal = ref('');
