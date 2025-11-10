@@ -30,7 +30,6 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-
     # ---------------------------------------------------------------------
     # ✅ Validación: SOLO hembras pueden registrar leche
     # ---------------------------------------------------------------------
@@ -51,22 +50,30 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
         return super().create(request, *args, **kwargs)
 
     # ---------------------------------------------------------------------
-    # ✅ 1. Estadísticas generales de TODA la producción del hato (hembras)
+    # ✅ 1. Estadísticas generales del hato con filtro por año
     # ---------------------------------------------------------------------
     @action(detail=False, methods=['get'])
     def estadisticas_generales(self, request):
         """
-        Retorna:
-        - total litros del año actual
-        - producción por mes del año actual
-        - meses con mayor y menor producción
+        Si envías:
+        /api3/produccion/estadisticas_generales/?año=2024
+        → Devuelve estadísticas del 2024.
+
+        Si no envías año:
+        → Usa el año actual.
         """
 
-        año_actual = now().year
+        # ✅ Tomar el año enviado
+        año_param = request.GET.get("año")
+
+        if año_param and año_param.isdigit():
+            año = int(año_param)
+        else:
+            año = now().year  # Año actual si no envían nada
 
         # Solo hembras
         produccion = ProduccionLeche.objects.filter(
-            fecha__year=año_actual,
+            fecha__year=año,
             animal__sexo="Hembra"
         )
 
@@ -84,12 +91,12 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
                 "litros": litros_mes
             })
 
-        # Buscar mayor y menor
+        # Mayor y menor
         mayor = max(meses, key=lambda m: m["litros"])
         menor = min(meses, key=lambda m: m["litros"])
 
         return Response({
-            "año": año_actual,
+            "año": año,
             "total_anual": total_anual,
             "produccion_mensual": meses,
             "mes_mayor_produccion": mayor,
@@ -104,11 +111,6 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
         """
         Ejemplo:
         /api3/produccion/estadisticas_animal/?animal_id=5
-
-        Devuelve:
-        - total del año
-        - litros por mes
-        - mes con mayor y menor producción
         """
 
         animal_id = request.GET.get("animal_id")
@@ -125,7 +127,6 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
 
         total_anual = produccion.aggregate(total=Sum("litros"))["total"] or 0
 
-        # Por mes
         meses = []
         for mes in range(1, 13):
             litros_mes = produccion.filter(fecha__month=mes).aggregate(
@@ -153,9 +154,6 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def comparar(self, request):
         """
-        Puede comparar:
-        ✅ Producción general del hato (si no mandas animal_id)
-        ✅ Producción de un animal específico
         Ejemplo:
         /api3/produccion/comparar/?animal_id=5&mes1=1&anio1=2025&mes2=5&anio2=2025
         """
@@ -166,7 +164,6 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
         mes2 = int(request.GET.get("mes2"))
         anio2 = int(request.GET.get("anio2"))
 
-        # FILTRO BASE (general o por animal)
         filtro = {}
 
         if animal_id:
@@ -174,14 +171,12 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
         else:
             filtro["animal__sexo"] = "Hembra"
 
-        # MES 1
         produc1 = ProduccionLeche.objects.filter(
             **filtro,
             fecha__year=anio1,
             fecha__month=mes1,
         ).aggregate(total=Sum("litros"))["total"] or 0
 
-        # MES 2
         produc2 = ProduccionLeche.objects.filter(
             **filtro,
             fecha__year=anio2,
