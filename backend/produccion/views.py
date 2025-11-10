@@ -16,6 +16,21 @@ class ProduccionLecheViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['animal']
 
+    # ✅ FILTRO PERSONALIZADO
+    def get_queryset(self):
+        queryset = ProduccionLeche.objects.all().order_by('-fecha')
+
+        animal_id = self.request.query_params.get('animal')
+        if animal_id:
+            queryset = queryset.filter(animal_id=animal_id)
+
+        año = self.request.query_params.get('año')
+        if año:
+            queryset = queryset.filter(fecha__year=año)
+
+        return queryset
+
+
     # ---------------------------------------------------------------------
     # ✅ Validación: SOLO hembras pueden registrar leche
     # ---------------------------------------------------------------------

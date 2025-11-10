@@ -158,15 +158,23 @@ const chartAnimalDataSafe = computed(() => {
 // ====================
 const cargarEstadisticasGenerales = async () => {
     try {
-        const res = await axios.get(`${API_PRODUCCION}estadisticas_generales/`);
+        const res = await axios.get(
+            `${API_PRODUCCION}estadisticas_generales/?año=${filtroAnio.value}`
+        );
+
         estadisticasGenerales.value = res.data;
 
-        chartGeneralData.value.labels = res.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
-        chartGeneralData.value.datasets[0].data = res.data?.produccion_mensual?.map(m => m.litros || 0) || [];
+        chartGeneralData.value.labels =
+            res.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
+
+        chartGeneralData.value.datasets[0].data =
+            res.data?.produccion_mensual?.map(m => m.litros || 0) || [];
+
     } catch (err) {
         console.error("Error cargando estadísticas generales:", err);
     }
 };
+
 
 // ====================
 // Buscar Animal
