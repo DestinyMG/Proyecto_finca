@@ -31,6 +31,7 @@
                                         <input id="chip" type="text" v-model="formData.chip"
                                             placeholder="Ej: 982123456789" />
                                     </div>
+
                                     <div class="form-group">
                                         <label for="chip2">Chip 2 (Opcional)</label>
                                         <input id="chip2" type="text" v-model="formData.chip2"
@@ -42,7 +43,6 @@
                                         <input id="chip3" type="text" v-model="formData.chip3"
                                             placeholder="Ej: 982123456789" />
                                     </div>
-
 
                                     <div class="form-group">
                                         <label for="tipo">Tipo</label>
@@ -85,10 +85,8 @@
                                 </div>
 
                                 <!-- DATOS CONDICIONALES -->
-                                <!-- DATOS CONDICIONALES -->
                                 <div class="form-grid">
 
-                                    <!-- Código Madre y Padre (opcional) -->
                                     <template v-if="formData.origen === 'Nacimiento'">
                                         <div class="form-group">
                                             <label for="codigo_madre">Código Madre (Opcional)</label>
@@ -107,7 +105,6 @@
                                         </div>
                                     </template>
 
-                                    <!-- Fechas y datos para hembras embarazadas -->
                                     <template v-if="formData.sexo === 'Hembra' && formData.embarazada">
                                         <div class="form-group">
                                             <label for="fecha_palpacion">Fecha de Palpación</label>
@@ -121,13 +118,11 @@
                                         </div>
                                     </template>
 
-                                    <!-- Fecha de compra (opcional) -->
                                     <div class="form-group" v-if="formData.origen === 'Compra'">
                                         <label for="fecha_compra">Fecha de Compra (Opcional)</label>
                                         <input type="date" id="fecha_compra" v-model="formData.fecha_compra" />
                                     </div>
 
-                                    <!-- Producción de leche para hembras -->
                                     <div class="form-group" v-if="formData.sexo === 'Hembra'">
                                         <label for="produccionLeche">Producción de Leche (L/día)</label>
                                         <input id="produccionLeche" type="number" step="0.1"
@@ -136,7 +131,6 @@
 
                                 </div>
 
-                                <!-- BOTONES -->
                                 <div class="form-actions">
                                     <button type="button" v-if="isEditing" @click="cancelarEdicion" class="cancel-btn">
                                         Cancelar
@@ -150,13 +144,14 @@
                     </div>
                 </Transition>
 
-                <!-- LISTADO DE ANIMALES -->
+                <!-- LISTADO -->
                 <div class="listado-animales">
                     <h3>Listado de Animales</h3>
 
                     <div v-for="(grupo, index) in gruposAnimales" :key="index">
                         <h4>{{ grupo.titulo }} ({{ grupo.lista.length }})</h4>
                         <div v-if="grupo.lista.length === 0" class="empty-state">No hay registros.</div>
+
                         <div v-else class="table-wrapper">
                             <table>
                                 <thead>
@@ -175,9 +170,9 @@
                                             </router-link>
                                         </td>
 
-
                                         <td>{{ animal.chip || 'N/A' }}</td>
                                         <td>{{ animal.procedencia }}</td>
+
                                         <td class="action-cell">
                                             <button @click="iniciarEdicion(animal)" class="edit-btn">✏️</button>
                                             <button @click="eliminarAnimal(animal.id)" class="delete-btn">🗑️</button>
@@ -186,8 +181,8 @@
                                 </tbody>
                             </table>
                         </div>
-                    </div>
 
+                    </div>
                 </div>
             </div>
         </template>
@@ -205,6 +200,7 @@ const isFormVisible = ref(false);
 const isEditing = ref(false);
 
 const initialFormData = {
+    id: null,
     codigoAnimal: '',
     chip: '',
     chip2: '',
@@ -214,15 +210,14 @@ const initialFormData = {
     procedencia: '',
     origen: '',
     embarazada: false,
-    fecha_palpacion: null,
-    fecha_parto: null,
-    fecha_compra: null,
-    codigo_madre: null,
-    codigo_padre: null,
-    fecha_nacimiento: null,
+    fecha_palpacion: '',
+    fecha_parto: '',
+    fecha_compra: '',
+    codigo_madre: '',
+    codigo_padre: '',
+    fecha_nacimiento: '',
     produccionLeche: 0,
 };
-
 
 const formData = ref({ ...initialFormData });
 const animales = ref([]);
@@ -232,14 +227,11 @@ const cargarAnimales = async () => {
         const res = await axios.get(API_URL);
         animales.value = res.data;
     } catch (error) {
-        console.error(error);
         alert('No se pudieron cargar los animales');
     }
 };
 
-onMounted(() => {
-    cargarAnimales();
-});
+onMounted(cargarAnimales);
 
 const bufalosMachos = computed(() => animales.value.filter(a => a.tipo === 'Bufalo' && a.sexo === 'Macho'));
 const bufalosHembras = computed(() => animales.value.filter(a => a.tipo === 'Bufalo' && a.sexo === 'Hembra'));
@@ -254,7 +246,7 @@ const gruposAnimales = computed(() => [
 ]);
 
 const toggleForm = () => {
-    if (isFormVisible.value && isEditing.value) cancelarEdicion();
+    if (isEditing.value) cancelarEdicion();
     isFormVisible.value = !isFormVisible.value;
 };
 
@@ -282,15 +274,14 @@ const prepararPayload = data => ({
     fecha_parto: data.fecha_parto || null,
     fecha_compra: data.fecha_compra || null,
     fecha_nacimiento: data.fecha_nacimiento || null,
-
     codigo_madre: data.codigo_madre || null,
     codigo_padre: data.codigo_padre || null,
     produccionLeche: data.produccionLeche || 0,
 });
 
-
 const guardarAnimal = async () => {
     const payload = prepararPayload(formData.value);
+
     try {
         if (isEditing.value) {
             await axios.put(`${API_URL}${formData.value.id}/`, payload);
@@ -299,32 +290,43 @@ const guardarAnimal = async () => {
             await axios.post(API_URL, payload);
             alert('Animal registrado con éxito!');
         }
-        await cargarAnimales();
+        cargarAnimales();
         resetForm();
         isFormVisible.value = false;
     } catch (error) {
-        console.error(error.response?.data || error);
         alert('Error al guardar el animal');
     }
 };
 
 const iniciarEdicion = animal => {
-    formData.value = { ...animal };
+    // ✅ Asegurar que TODOS los campos existan siempre
+    formData.value = {
+        ...initialFormData,
+        ...animal,
+        chip: animal.chip ?? '',
+        chip2: animal.chip2 ?? '',
+        chip3: animal.chip3 ?? '',
+        codigo_madre: animal.codigo_madre ?? '',
+        codigo_padre: animal.codigo_padre ?? '',
+        fecha_nacimiento: animal.fecha_nacimiento ?? '',
+    };
+
     isEditing.value = true;
     isFormVisible.value = true;
 };
 
 const eliminarAnimal = async id => {
-    if (confirm(`¿Deseas eliminar el animal con ID ${id}?`)) {
-        try {
-            await axios.delete(`${API_URL}${id}/`);
-            alert('Animal eliminado.');
-            await cargarAnimales();
-            if (isEditing.value && formData.value.id === id) cancelarEdicion();
-        } catch (error) {
-            console.error(error);
-            alert('Error al eliminar el animal');
-        }
+    if (!confirm(`¿Deseas eliminar el animal con ID ${id}?`)) return;
+
+    try {
+        await axios.delete(`${API_URL}${id}/`);
+        alert('Animal eliminado.');
+        cargarAnimales();
+
+        if (isEditing.value && formData.value.id === id) cancelarEdicion();
+
+    } catch (error) {
+        alert('Error al eliminar el animal');
     }
 };
 </script>

@@ -47,7 +47,7 @@
                         <p><strong>Fecha:</strong> {{ registro.fecha_registro }}</p>
                         <p><strong>Estado:</strong> {{ registro.estado }}</p>
                         <p v-if="registro.enfermedad_nombre"><strong>Enfermedad:</strong> {{ registro.enfermedad_nombre
-                        }}</p>
+                            }}</p>
                         <p v-if="registro.tratamiento"><strong>Tratamiento:</strong> {{ registro.tratamiento }}</p>
                         <p v-if="registro.observaciones"><strong>Observaciones:</strong> {{ registro.observaciones }}
                         </p>
