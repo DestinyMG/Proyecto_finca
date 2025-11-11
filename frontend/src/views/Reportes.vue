@@ -7,9 +7,13 @@
             <div class="estadisticas-generales">
                 <h3>Producción General del Hato</h3>
 
-                <div>
+                <div class="anio-filter">
                     <label>Filtrar por año:</label>
-                    <input type="number" v-model.number="filtroAnio" @change="cargarEstadisticasGenerales" />
+                    <input type="number" v-model.number="filtroAnio" />
+
+                    <button @click="cargarEstadisticasGenerales">
+                        Buscar Año
+                    </button>
                 </div>
 
                 <div v-if="estadisticasGenerales">
@@ -41,11 +45,9 @@
                     <div v-if="estadisticasAnimal">
                         <p><strong>Total anual:</strong> {{ estadisticasAnimal.total_anual }} litros</p>
 
-                        <!-- Gráfico animal -->
                         <div class="grafico-pie-container">
                             <Pie v-if="chartAnimalDataSafe" :data="chartAnimalDataSafe" :options="chartOptions" />
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -80,6 +82,7 @@ const chartGeneralData = ref({
     datasets: [{ label: "Litros", data: [], backgroundColor: [] }]
 });
 
+// Animal
 const codigoAnimal = ref("");
 const animalSeleccionado = ref(null);
 const estadisticasAnimal = ref(null);
@@ -88,14 +91,14 @@ const chartAnimalData = ref({
     datasets: [{ label: "Litros", data: [], backgroundColor: [] }]
 });
 
-// Opciones comunes de Chart.js
+// Opciones Chart.js
 const chartOptions = {
     responsive: true,
     plugins: { legend: { position: "bottom" } }
 };
 
 // ====================
-// Props de gráficos seguros
+// PROP GRÁFICO GENERAL
 // ====================
 const chartGeneralDataSafe = computed(() => {
     if (!chartGeneralData.value.labels?.length) return null;
@@ -107,24 +110,18 @@ const chartGeneralDataSafe = computed(() => {
                 label: "Litros",
                 data: chartGeneralData.value.datasets[0].data,
                 backgroundColor: [
-                    "#FF6384",
-                    "#36A2EB",
-                    "#FFCE56",
-                    "#4BC0C0",
-                    "#9966FF",
-                    "#FF9F40",
-                    "#C9CBCF",
-                    "#FF6384",
-                    "#36A2EB",
-                    "#FFCE56",
-                    "#4BC0C0",
-                    "#9966FF"
+                    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+                    "#9966FF", "#FF9F40", "#C9CBCF", "#FF6384",
+                    "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"
                 ]
             }
         ]
     };
 });
 
+// ====================
+// PROP GRÁFICO ANIMAL
+// ====================
 const chartAnimalDataSafe = computed(() => {
     if (!chartAnimalData.value.labels?.length) return null;
 
@@ -135,18 +132,9 @@ const chartAnimalDataSafe = computed(() => {
                 label: "Litros",
                 data: chartAnimalData.value.datasets[0].data,
                 backgroundColor: [
-                    "#FF6384",
-                    "#36A2EB",
-                    "#FFCE56",
-                    "#4BC0C0",
-                    "#9966FF",
-                    "#FF9F40",
-                    "#C9CBCF",
-                    "#FF6384",
-                    "#36A2EB",
-                    "#FFCE56",
-                    "#4BC0C0",
-                    "#9966FF"
+                    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+                    "#9966FF", "#FF9F40", "#C9CBCF", "#FF6384",
+                    "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"
                 ]
             }
         ]
@@ -154,7 +142,7 @@ const chartAnimalDataSafe = computed(() => {
 });
 
 // ====================
-// Cargar estadísticas generales
+// CARGAR ESTADÍSTICAS GENERALES SEGÚN AÑO
 // ====================
 const cargarEstadisticasGenerales = async () => {
     try {
@@ -164,20 +152,17 @@ const cargarEstadisticasGenerales = async () => {
 
         estadisticasGenerales.value = res.data;
 
-        chartGeneralData.value.labels =
-            res.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
-
-        chartGeneralData.value.datasets[0].data =
-            res.data?.produccion_mensual?.map(m => m.litros || 0) || [];
+        chartGeneralData.value.labels = res.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
+        chartGeneralData.value.datasets[0].data = res.data?.produccion_mensual?.map(m => m.litros || 0) || [];
 
     } catch (err) {
         console.error("Error cargando estadísticas generales:", err);
+        alert("No se pudo cargar la información.");
     }
 };
 
-
 // ====================
-// Buscar Animal
+// BUSCAR ANIMAL
 // ====================
 const buscarAnimal = async () => {
     if (!codigoAnimal.value.trim()) return alert("Ingrese un código de animal");
@@ -195,11 +180,15 @@ const buscarAnimal = async () => {
 
         animalSeleccionado.value = resAnimal.data[0];
 
-        const resEst = await axios.get(`${API_PRODUCCION}estadisticas_animal/?animal_id=${animalSeleccionado.value.id}`);
+        const resEst = await axios.get(
+            `${API_PRODUCCION}estadisticas_animal/?animal_id=${animalSeleccionado.value.id}&año=${filtroAnio.value}`
+        );
+
         estadisticasAnimal.value = resEst.data;
 
         chartAnimalData.value.labels = resEst.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
         chartAnimalData.value.datasets[0].data = resEst.data?.produccion_mensual?.map(m => m.litros || 0) || [];
+
     } catch (err) {
         console.error("Error buscando animal:", err);
         alert("Error al buscar animal o traer estadísticas");
@@ -207,12 +196,13 @@ const buscarAnimal = async () => {
 };
 
 // ====================
-// Inicialización
+// Al cargar la página → carga el año actual
 // ====================
 onMounted(() => {
     cargarEstadisticasGenerales();
 });
 </script>
+
 
 
 
@@ -360,5 +350,18 @@ input {
     width: 500px;
     height: 500px;
     margin: 20px auto;
+}
+
+.animal-search input {
+    padding: 6px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    width: 200px;
+    /* Ajusta tamaño */
+}
+
+.animal-search button {
+    margin-left: 10px;
 }
 </style>

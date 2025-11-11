@@ -1,54 +1,55 @@
 <template>
     <BaseAdmin>
         <div class="produccion-leche-container">
-            <h2>Estadísticas de Producción de Leche</h2>
+            <h2>Registro de Producción de Leche</h2>
 
-            <!-- Estadísticas Generales -->
-            <div class="estadisticas-generales">
-                <h3>Producción General del Hato</h3>
+            <!-- BUSCADOR DE ANIMAL -->
+            <div class="form-card">
+                <div class="form-group">
+                    <label>Código del Animal</label>
+                    <div class="animal-search">
+                        <input v-model="codigoAnimal" placeholder="Ej: A001" />
+                        <button type="button" @click="buscarAnimal">Buscar</button>
+                    </div>
 
-                <div class="anio-filter">
-                    <label>Filtrar por año:</label>
-                    <input type="number" v-model.number="filtroAnio" />
-
-                    <button @click="cargarEstadisticasGenerales">
-                        Buscar Año
-                    </button>
-                </div>
-
-                <div v-if="estadisticasGenerales">
-                    <p><strong>Total anual:</strong> {{ estadisticasGenerales.total_anual }} litros</p>
-
-                    <!-- Gráfico general -->
-                    <div class="grafico-pie-container">
-                        <Pie v-if="chartGeneralDataSafe" :data="chartGeneralDataSafe" :options="chartOptions" />
+                    <div v-if="animalSeleccionado" class="animal-info">
+                        <p><strong>Tipo:</strong> {{ animalSeleccionado.tipo }}</p>
+                        <p><strong>Sexo:</strong> {{ animalSeleccionado.sexo }}</p>
                     </div>
                 </div>
             </div>
 
-            <hr />
-
-            <!-- Estadísticas por Animal -->
-            <div class="estadisticas-animal">
-                <h3>Producción por Animal</h3>
-
-                <div class="animal-search">
-                    <input v-model="codigoAnimal" placeholder="Código del Animal" />
-                    <button type="button" @click="buscarAnimal">Buscar Animal</button>
-                </div>
-
-                <div v-if="animalSeleccionado">
-                    <p><strong>Animal:</strong> {{ animalSeleccionado.codigoAnimal }} ({{ animalSeleccionado.tipo }})
-                    </p>
-                    <p><strong>Sexo:</strong> {{ animalSeleccionado.sexo }}</p>
-
-                    <div v-if="estadisticasAnimal">
-                        <p><strong>Total anual:</strong> {{ estadisticasAnimal.total_anual }} litros</p>
-
-                        <div class="grafico-pie-container">
-                            <Pie v-if="chartAnimalDataSafe" :data="chartAnimalDataSafe" :options="chartOptions" />
-                        </div>
+            <!-- FORMULARIO DE REGISTRO -->
+            <div v-if="animalSeleccionado" class="form-card">
+                <form @submit.prevent="guardarRegistro">
+                    <div class="form-group">
+                        <label>Fecha</label>
+                        <input type="date" v-model="formData.fecha" required />
                     </div>
+
+                    <div class="form-group">
+                        <label>Litros de Leche</label>
+                        <input type="number" v-model="formData.litros" step="0.1" required />
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit">{{ editing ? 'Actualizar Registro' : 'Guardar Registro' }}</button>
+                        <button v-if="editing" type="button" @click="cancelarEdicion">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- HISTORIAL DE PRODUCCIÓN -->
+            <div v-if="historial.length" class="historial-card">
+                <h3>Historial de Producción de Leche</h3>
+                <div v-for="r in historial" :key="r.id" class="registro-item">
+                    <h4>📅 {{ r.fecha }}</h4>
+                    <p><strong>Litros:</strong> {{ r.litros }}</p>
+                    <div class="registro-actions">
+                        <button @click="editarRegistro(r)">Editar</button>
+                        <button @click="eliminarRegistro(r.id)">Eliminar</button>
+                    </div>
+                    <hr />
                 </div>
             </div>
         </div>
@@ -56,153 +57,119 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import axios from "axios";
-import BaseAdmin from "../components/BaseAdmin.vue";
+import { ref } from 'vue';
+import axios from 'axios';
+import BaseAdmin from '../components/BaseAdmin.vue';
 
-import {
-    Chart as ChartJS,
-    Title,
-    Tooltip,
-    Legend,
-    ArcElement
-} from "chart.js";
-import { Pie } from "vue-chartjs";
+// ENDPOINTS
+const API_ANIMALES = 'https://proyecto-finca-yxcf.onrender.com/api1/animales/';
+const API_PRODUCCION = 'https://proyecto-finca-yxcf.onrender.com/api3/produccion/';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement);
-
-const API_PRODUCCION = "https://proyecto-finca-yxcf.onrender.com/api3/produccion/";
-const API_ANIMALES = "https://proyecto-finca-yxcf.onrender.com/api1/animales/";
-
-// Variables generales
-const filtroAnio = ref(new Date().getFullYear());
-const estadisticasGenerales = ref(null);
-const chartGeneralData = ref({
-    labels: [],
-    datasets: [{ label: "Litros", data: [], backgroundColor: [] }]
-});
-
-// Animal
-const codigoAnimal = ref("");
+// VARIABLES
+const codigoAnimal = ref('');
 const animalSeleccionado = ref(null);
-const estadisticasAnimal = ref(null);
-const chartAnimalData = ref({
-    labels: [],
-    datasets: [{ label: "Litros", data: [], backgroundColor: [] }]
+const historial = ref([]);
+
+const editing = ref(false);
+const editId = ref(null);
+
+const formData = ref({
+    animal: null,
+    fecha: new Date().toISOString().substring(0, 10),
+    litros: 0,
 });
 
-// Opciones Chart.js
-const chartOptions = {
-    responsive: true,
-    plugins: { legend: { position: "bottom" } }
-};
-
-// ====================
-// PROP GRÁFICO GENERAL
-// ====================
-const chartGeneralDataSafe = computed(() => {
-    if (!chartGeneralData.value.labels?.length) return null;
-
-    return {
-        labels: chartGeneralData.value.labels,
-        datasets: [
-            {
-                label: "Litros",
-                data: chartGeneralData.value.datasets[0].data,
-                backgroundColor: [
-                    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
-                    "#9966FF", "#FF9F40", "#C9CBCF", "#FF6384",
-                    "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"
-                ]
-            }
-        ]
-    };
-});
-
-// ====================
-// PROP GRÁFICO ANIMAL
-// ====================
-const chartAnimalDataSafe = computed(() => {
-    if (!chartAnimalData.value.labels?.length) return null;
-
-    return {
-        labels: chartAnimalData.value.labels,
-        datasets: [
-            {
-                label: "Litros",
-                data: chartAnimalData.value.datasets[0].data,
-                backgroundColor: [
-                    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
-                    "#9966FF", "#FF9F40", "#C9CBCF", "#FF6384",
-                    "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"
-                ]
-            }
-        ]
-    };
-});
-
-// ====================
-// CARGAR ESTADÍSTICAS GENERALES SEGÚN AÑO
-// ====================
-const cargarEstadisticasGenerales = async () => {
-    try {
-        const res = await axios.get(
-            `${API_PRODUCCION}estadisticas_generales/?año=${filtroAnio.value}`
-        );
-
-        estadisticasGenerales.value = res.data;
-
-        chartGeneralData.value.labels = res.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
-        chartGeneralData.value.datasets[0].data = res.data?.produccion_mensual?.map(m => m.litros || 0) || [];
-
-    } catch (err) {
-        console.error("Error cargando estadísticas generales:", err);
-        alert("No se pudo cargar la información.");
-    }
-};
-
-// ====================
-// BUSCAR ANIMAL
-// ====================
+// FUNCIONES
 const buscarAnimal = async () => {
-    if (!codigoAnimal.value.trim()) return alert("Ingrese un código de animal");
+    if (!codigoAnimal.value.trim()) return alert('Ingrese un código de animal.');
 
     try {
-        const resAnimal = await axios.get(`${API_ANIMALES}?codigoAnimal=${codigoAnimal.value.trim()}`);
-        if (!resAnimal.data.length) {
-            alert("Animal no encontrado");
+        const res = await axios.get(`${API_ANIMALES}?codigoAnimal=${codigoAnimal.value.trim()}`);
+        if (!res.data.length) {
+            alert('Animal no encontrado.');
             animalSeleccionado.value = null;
-            estadisticasAnimal.value = null;
-            chartAnimalData.value.labels = [];
-            chartAnimalData.value.datasets[0].data = [];
+            formData.value.animal = null;
+            historial.value = [];
             return;
         }
 
-        animalSeleccionado.value = resAnimal.data[0];
+        const animal = res.data[0];
 
-        const resEst = await axios.get(
-            `${API_PRODUCCION}estadisticas_animal/?animal_id=${animalSeleccionado.value.id}&año=${filtroAnio.value}`
-        );
+        if (animal.sexo !== 'Hembra') {
+            alert('Solo se puede registrar leche para hembras.');
+            animalSeleccionado.value = null;
+            formData.value.animal = null;
+            historial.value = [];
+            return;
+        }
 
-        estadisticasAnimal.value = resEst.data;
+        animalSeleccionado.value = animal;
+        formData.value.animal = animal.id;
 
-        chartAnimalData.value.labels = resEst.data?.produccion_mensual?.map(m => `Mes ${m.mes}`) || [];
-        chartAnimalData.value.datasets[0].data = resEst.data?.produccion_mensual?.map(m => m.litros || 0) || [];
+        // Cargar historial de producción
+        const his = await axios.get(`${API_PRODUCCION}?animal=${animal.id}`);
+        historial.value = his.data;
 
     } catch (err) {
-        console.error("Error buscando animal:", err);
-        alert("Error al buscar animal o traer estadísticas");
+        console.error('Error buscando animal:', err);
+        alert('Error al buscar el animal.');
     }
 };
 
-// ====================
-// Al cargar la página → carga el año actual
-// ====================
-onMounted(() => {
-    cargarEstadisticasGenerales();
-});
-</script>
+const guardarRegistro = async () => {
+    if (!formData.value.animal) return alert('Debe seleccionar un animal.');
 
+    try {
+        if (editing.value) {
+            await axios.put(`${API_PRODUCCION}${editId.value}/`, formData.value);
+            editing.value = false;
+            editId.value = null;
+        } else {
+            await axios.post(API_PRODUCCION, formData.value);
+        }
+
+        alert('Registro guardado correctamente.');
+        buscarAnimal();
+        resetForm();
+
+    } catch (err) {
+        console.error('Error guardando registro:', err.response?.data || err);
+        alert('Error al guardar el registro.');
+    }
+};
+
+const editarRegistro = (registro) => {
+    formData.value = { ...registro };
+    editing.value = true;
+    editId.value = registro.id;
+};
+
+const eliminarRegistro = async (id) => {
+    if (!confirm('¿Está seguro de eliminar este registro?')) return;
+    try {
+        await axios.delete(`${API_PRODUCCION}${id}/`);
+        alert('Registro eliminado.');
+        buscarAnimal();
+    } catch (err) {
+        console.error('Error eliminando registro:', err.response?.data || err);
+        alert('Error al eliminar el registro.');
+    }
+};
+
+const cancelarEdicion = () => {
+    editing.value = false;
+    editId.value = null;
+    resetForm();
+};
+
+const resetForm = () => {
+    formData.value = {
+        animal: animalSeleccionado.value?.id || null,
+        fecha: new Date().toISOString().substring(0, 10),
+        litros: 0,
+    };
+};
+</script>
 
 <style scoped>
 /* ---------- CONTENEDOR GENERAL ---------- */
